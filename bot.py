@@ -4,7 +4,6 @@ import responses
 import os
 from dotenv import load_dotenv
 
-
 # Send messages
 async def send_message(message, user_message, is_private):
     try:
@@ -33,7 +32,6 @@ def run_discord_bot():
         # Make sure bot doesn't get stuck in an infinite loop
         if message.author == client.user:
             return
-        print(message)
 
         # Get the data
         username = str(message.author)
@@ -52,6 +50,7 @@ def run_discord_bot():
             await send_message(message, user_message, is_private=False)
         else:
             print("no response will be send")
+
 
     # Remember to run your bot with your personal TOKEN
     client.run(TOKEN)
