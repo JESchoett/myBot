@@ -1,5 +1,4 @@
 import discord
-import responses
 import random
 
 import os
@@ -7,8 +6,8 @@ from dotenv import load_dotenv
 
 from discord.ext import commands
 
-#import logging
-#handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+import logging
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
 #get the Bot Token from a .env file
 load_dotenv()
@@ -60,10 +59,12 @@ async def roll(ctx, dice='d6', amount=1):
     returnString = returnString.replace("'", '')
     await ctx.send(returnString)
 
-#@JEbot.command(name="chtotxt", description='den Inhalt des Channels in eine TXT schreiben', brief='den Inhalt des Channels in eine TXT schreiben')
-#async def chtotxt(ctx):
-#    chatHis = ctx.channel.history(limit=200).flatten()
-#    print(chatHis)
-#    await ctx.send(chatHis)
+@JEbot.command(name="chtotxt", description='den Inhalt des Channels in eine TXT schreiben', brief='den Inhalt des Channels in eine TXT schreiben')
+async def chtotxt(ctx):
+    #https://stackoverflow.com/questions/63464013/discord-python-export-an-entire-chat-into-txt-file
+    filename = f"{ctx.channel.name}.txt"
+    with open(filename, "w") as file:
+        async for msg in ctx.channel.history(limit=None):
+            file.write(f"{msg.clean_content}\n")
 
 JEbot.run(TOKEN)
