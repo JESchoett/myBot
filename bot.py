@@ -1,56 +1,69 @@
 import discord
 import responses
+import random
 
 import os
 from dotenv import load_dotenv
 
-# Send messages
-async def send_message(message, user_message, is_private):
-    try:
-        response = responses.handle_response(user_message)
-        await message.author.send(response) if is_private else await message.channel.send(response)
+from discord.ext import commands
 
-    except Exception as e:
-        print(e)
+#import logging
+#handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
+#get the Bot Token from a .env file
+load_dotenv()
+TOKEN = os.getenv('DISC_TOKEN')
+GUILD = os.getenv('DISC_GUILD')
 
-def run_discord_bot():
-    load_dotenv()
-    TOKEN = os.getenv('DISC_TOKEN')
-    GUILD = os.getenv('DISC_GUILD')
-    #https://discordpy.readthedocs.io/en/latest/intents.html?highlight=intents
-    intents = discord.Intents.default()
-    intents.message_content = True
-    client = discord.Client(intents=intents)
+#https://discordpy.readthedocs.io/en/latest/intents.html?highlight=intents
+intents = discord.Intents.default()
+intents.message_content = True
+client = discord.Client(intents=intents)
 
-    @client.event
-    async def on_ready():
-        print(f'{client.user} is now running!')
+default_prefixes = ['$']
+JEbot = commands.Bot(command_prefix = default_prefixes, case_insensitive=True, intents=discord.Intents.all())
 
-    @client.event
-    async def on_message(message):
-        # Make sure bot doesn't get stuck in an infinite loop
-        if message.author == client.user:
-            return
+@JEbot.event
+async def on_ready():
+    print(f'{JEbot.user} is now running!')
+    list = [
+        'hacker man coding',
+        'mindlessly scrolling reddit',
+        'thinking about a girl',
+        'at the gym'
+    ]
+    activity = discord.Game(name=random.choice(list))
+    await JEbot.change_presence(status=discord.Status.online, activity=activity)
 
-        # Get the data
-        username = str(message.author)
-        user_message = str(message.content)
-        channel = str(message.channel)
+#hello
+@JEbot.command(name="hello", description='greets you', brief='greets you')
+async def hello(ctx):
+    await ctx.send('Hello there!')
 
-        # Debug printing
-        print(f"{username} said: '{user_message}' ({channel})")
+#id
+@JEbot.command(name="id", description='gibt deine Discord User-ID an', brief='gibt deine Discord User-ID an')
+async def id(ctx):
+    await ctx.send(ctx.message.author.id)
 
-        # ? send privat   $ send public
-        if user_message[0] == '?':
-            user_message = user_message[1:]  # [1:] Removes the '?'
-            await send_message(message, user_message, is_private=True)
-        elif user_message[0] == '$':
-            user_message = user_message[1:]  # [1:] Removes the '?'
-            await send_message(message, user_message, is_private=False)
-        else:
-            print("no response will be send")
+#roll
+@JEbot.command(name="roll", description='rolle einen Würfel', brief='rolle einen Würfel')
+async def roll(ctx, dice='d6', amount=1):
+    rolling = []
 
+    for _ in range (0,amount) :
+        rolling.append("you rolled a:" + str(random.randint(1, int(dice[1:]))))
 
-    # Remember to run your bot with your personal TOKEN
-    client.run(TOKEN)
+    returnString = str(rolling)
+    returnString = returnString.replace('[', '')
+    returnString = returnString.replace(']', '')
+    returnString = returnString.replace(',', '\n')
+    returnString = returnString.replace("'", '')
+    await ctx.send(returnString)
+
+#@JEbot.command(name="chtotxt", description='den Inhalt des Channels in eine TXT schreiben', brief='den Inhalt des Channels in eine TXT schreiben')
+#async def chtotxt(ctx):
+#    chatHis = ctx.channel.history(limit=200).flatten()
+#    print(chatHis)
+#    await ctx.send(chatHis)
+
+JEbot.run(TOKEN)
