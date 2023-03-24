@@ -29,7 +29,10 @@ async def on_ready():
         'hacker man coding',
         'mindlessly scrolling reddit',
         'thinking about a girl',
-        'at the gym'
+        'at the gym',
+        'EE ist der Beste',
+        'BERND',
+        'HD ne 4K',
     ]
     activity = discord.Game(name=random.choice(list))
     await JEbot.change_presence(status=discord.Status.online, activity=activity)
@@ -46,11 +49,31 @@ async def id(ctx):
 
 #roll
 @JEbot.command(name="roll", description='rolle einen Würfel', brief='rolle einen Würfel')
-async def roll(ctx, dice='d6', amount=1):
+async def roll(ctx, dice='d6', amount=1, system=' '):
     rolling = []
+    rollingVal = []
+    success = 0
+    if system.lower() == "scion":
+        dice = 'd10'
 
     for _ in range (0,amount) :
-        rolling.append("you rolled a:" + str(random.randint(1, int(dice[1:]))))
+        roll = True
+        while roll:
+            diceVal = random.randint(1, int(dice[1:]))
+            rollingVal.append(diceVal)
+            rolling.append(f"you rolled a: {diceVal}")
+            if diceVal == 10 and system.lower("scion"):
+                roll = True
+            else:
+                roll = False
+
+    if system.lower() == "scion":
+        success = rollingVal.count(8) + rollingVal.count(9) + rollingVal.count(10)
+        rolling.append(f"number of successes: {success}")
+        if success == 0 and 1 in rollingVal:
+            rolling.append(f"WOOOP BOTCH Momentum +2")
+
+    rolling.append(f"you rolled: {len(rollingVal)} times")
 
     returnString = str(rolling)
     returnString = returnString.replace('[', '')
@@ -66,5 +89,27 @@ async def chtotxt(ctx):
     with open(filename, "w") as file:
         async for msg in ctx.channel.history(limit=None):
             file.write(f"{msg.clean_content}\n")
+    await ctx.send(file)
+
+#global sessionMomentum
+#sessionMomentum = 0
+#global spendMomentum
+#spendMomentum = 0
+##momentum
+#@JEbot.command(name="momentum", description='Scion Momentum', brief='Scion Momentum')
+#async def momentum(ctx, momentumModus="show", amount=1):
+#    if momentumModus == "new":
+#        sessionMomentum = amount
+#    if momentumModus == "add":
+#        sessionMomentum += amount
+#    if momentumModus == "sub" and sessionMomentum < amount:
+#        await ctx.send("ich kann nicht mehr Momentum abziehen als ihr habt")
+#    elif momentumModus == "sub" and sessionMomentum >= amount:
+#        sessionMomentum -= amount
+#        spendMomentum += amount
+#    returnStr = (f"euer aktuelles Momentum {sessionMomentum}")
+#    await ctx.send(returnStr)
+
+
 
 JEbot.run(TOKEN)
