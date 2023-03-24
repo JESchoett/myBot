@@ -91,24 +91,23 @@ async def chtotxt(ctx):
             file.write(f"{msg.clean_content}\n")
     await ctx.send(file)
 
-#global sessionMomentum
-#sessionMomentum = 0
-#global spendMomentum
-#spendMomentum = 0
-##momentum
-#@JEbot.command(name="momentum", description='Scion Momentum', brief='Scion Momentum')
-#async def momentum(ctx, momentumModus="show", amount=1):
-#    if momentumModus == "new":
-#        sessionMomentum = amount
-#    if momentumModus == "add":
-#        sessionMomentum += amount
-#    if momentumModus == "sub" and sessionMomentum < amount:
-#        await ctx.send("ich kann nicht mehr Momentum abziehen als ihr habt")
-#    elif momentumModus == "sub" and sessionMomentum >= amount:
-#        sessionMomentum -= amount
-#        spendMomentum += amount
-#    returnStr = (f"euer aktuelles Momentum {sessionMomentum}")
-#    await ctx.send(returnStr)
+sessionMomentum = 0
+spendMomentum = 0
+#momentum
+@JEbot.command(name="momentum", description='Scion Momentum', brief='Scion Momentum')
+async def momentum(ctx, momentumModus="show", amount=1):
+    global sessionMomentum
+    global spendMomentum
+
+    if momentumModus == "add":
+        sessionMomentum += amount
+    if momentumModus == "sub" and sessionMomentum < amount:
+        await ctx.send("ich kann nicht mehr Momentum abziehen als ihr habt")
+    elif momentumModus == "sub" and sessionMomentum >= amount:
+        sessionMomentum -= amount
+        spendMomentum += amount
+    returnStr = (f"euer aktuelles Momentum {sessionMomentum}")
+    await ctx.send(returnStr)
 
 
 
