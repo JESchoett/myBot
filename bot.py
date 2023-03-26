@@ -1,6 +1,17 @@
+"""
+ToDo´s:
+- Roll Botch should add 2 momentum
+- Roll Nach 150 Würfen eine 2te msg senden
+- add before to chtotxt
+- add BS Block Counter
+"""
+
+
+
 import discord
 import random
 import os
+import datetime
 from dotenv import load_dotenv #zum Aufruf der .env Datei
 from discord.ext import commands
 import argparse #für die argument Beschreibung der commands
@@ -57,7 +68,7 @@ async def id(ctx):
 
 #roll
 @JEbot.command(name="roll", description='Rolle einen Würfel', brief='Rolle einen Würfel')
-async def roll(ctx, dice='d6', amount=1, system=''):
+async def roll(ctx, dice='d6', amount=1, system='',autoSuc = 0):
     """
     Rolle einen Würfel
 
@@ -66,22 +77,41 @@ async def roll(ctx, dice='d6', amount=1, system=''):
         - amount = 1 [wie oft soll gewürfelt werden?]
         - system = "" [wird mit einem bestimmten System gespielt?]
                    "Scion"  [Scion: Erfolge werden nochmal gewürfelt und bei einem Botch wird Momentum hinzu gefügt]
+        - autoSuc = 0 [auto Erfolge]
     """
-
     rolling = []
     rollingVal = []
     success = 0
     if system.lower() == "scion":
         dice = 'd10'
         system == "scion"
+        if amount > 30:
+            amount = 30
+
+    #async def sendRollStr():
+    #    returnString = str(rolling)
+    #    returnString = returnString.replace('[', '')
+    #    returnString = returnString.replace(']', '')
+    #    returnString = returnString.replace(',', '\n')
+    #    returnString = returnString.replace("'", '')
+    #    await ctx.send(returnString)
+#
+    #    returnString = ""
+    #    rolling.clear()
+    #    return returnString,rolling
+
 
     for wuerfel in range (0,amount) :
         roll = True
         while roll:
             diceVal = random.randint(1, int(dice[1:]))
             rollingVal.append(diceVal)
-            rolling.append(f"Wurf {wuerfel+1}: {diceVal}")
-            if diceVal == 10 and system.lower("scion"):
+            rolling.append(f"Wurf {len(rollingVal)}: {diceVal}")
+
+            #if len(rollingVal) == 150:
+            #    await sendRollStr()
+
+            if diceVal == 10 and system == "scion":
                 roll = True
             else:
                 roll = False
@@ -89,21 +119,20 @@ async def roll(ctx, dice='d6', amount=1, system=''):
     botch = False
     if system == "scion":
         success = rollingVal.count(8) + rollingVal.count(9) + rollingVal.count(10)
-        rolling.append(f"Erfolge: {success}")
+        rolling.append(f"Erfolge: {success} + {autoSuc}")
         if success == 0 and 1 in rollingVal:
             rolling.append(f"WOOOP BOTCH Momentum +2")
             botch = True
 
+        returnString = str(rolling)
+        returnString = returnString.replace('[', '')
+        returnString = returnString.replace(']', '')
+        returnString = returnString.replace(',', '\n')
+        returnString = returnString.replace("'", '')
+        await ctx.send(returnString)
 
-    returnString = str(rolling)
-    returnString = returnString.replace('[', '')
-    returnString = returnString.replace(']', '')
-    returnString = returnString.replace(',', '\n')
-    returnString = returnString.replace("'", '')
-
-    await ctx.send(returnString)
-    if botch:
-        await JEbot.get_command('momentum').invoke(ctx, "add", "2")
+        #if botch:
+        #    await JEbot.get_command('momentum').invoke(ctx, "add", "2")
 
 @JEbot.command(name="chtotxt", description='den Inhalt des Channels in eine TXT schreiben', brief='den Inhalt des Channels in eine TXT schreiben')
 async def chtotxt(ctx, limit=10):
@@ -140,11 +169,18 @@ async def momentum(ctx, momentumModus="show", amount=1):
 
     """
 
+    if momentumModus == "new":
+        thisSession.playerCount = amount
+        thisSession.maxMomentum = thisSession.playerCount*2
+        returnStr = (f"eure Spieleranzahl ist {thisSession.playerCount}")
     if momentumModus == "spend":
         returnStr = (f"euer ausgegeben Momentum {thisSession.spendMomentum}")
         await ctx.send(returnStr)
     if momentumModus == "add":
-        thisSession.sessionMomentum += amount
+        if thisSession.sessionMomentum + amount > thisSession.maxMomentum:
+            thisSession.sessionMomentum = thisSession.maxMomentum
+        else:
+            thisSession.sessionMomentum += amount
     if momentumModus == "sub" and thisSession.sessionMomentum < amount:
         await ctx.send("ich kann nicht mehr Momentum abziehen als ihr habt")
     elif momentumModus == "sub" and thisSession.sessionMomentum >= amount:
