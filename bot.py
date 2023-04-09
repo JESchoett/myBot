@@ -1,7 +1,6 @@
 """
 ToDo´s:
 - Roll Botch should add 2 momentum
-- Roll Nach 150 Würfen eine 2te msg senden
 - add before to chtotxt
 - add BS Block Counter
 """
@@ -46,6 +45,10 @@ async def on_ready():
         'EE ist der Beste',
         'BERND',
         'HD ne 4K',
+        'am Schlafen',
+        'es lebt',
+        'label nach links verschieben',
+        'SCHOKOBON',
     ]
     activity = discord.Game(name=random.choice(list))
     await JEbot.change_presence(status=discord.Status.online, activity=activity)
@@ -78,15 +81,15 @@ async def roll(ctx, dice='d6', amount=1, system='',autoSuc = 0):
         - system = "" [wird mit einem bestimmten System gespielt?]
                    "Scion"  [Scion: Erfolge werden nochmal gewürfelt und bei einem Botch wird Momentum hinzu gefügt]
         - autoSuc = 0 [auto Erfolge]
-    """
+    """ 
     rolling = []
     rollingVal = []
     success = 0
     if system.lower() == "scion":
         dice = 'd10'
         system == "scion"
-        if amount > 30:
-            amount = 30
+        if amount > 10 + thisSession.maxMomentum:
+            amount = 10 + thisSession.maxMomentum
 
     #async def sendRollStr():
     #    returnString = str(rolling)
@@ -153,7 +156,6 @@ async def chtotxt(ctx, limit=10):
     os.remove(filename)
 
 
-
 #momentum
 thisSession = Momentum()
 @JEbot.command(name="momentum", description='Scion Momentum System', brief='Scion Momentum')
@@ -161,12 +163,14 @@ async def momentum(ctx, momentumModus="show", amount=1):
     """
     Das Scion Momentum System
     In dem PnP Scion kann momentum für Würfe ausgegeben werden um eine neue Chance zu haben oder mehr Würfel zu verwenden.
+    Wichtig ist hierbei erstmal mit "new" den Player Count zu initialisieriern
 
     Argumente (= default):
         - momentumModus = "show" [Wie viel Momentum hat die Party]\n
+                          "new"  [Ändert die Variablen  Max Momentum und Player count]\n
                           "add"  [füge Momentum zum Counter hinzu]\n
                           "sub"  [ziehe Momentum vom Counter ab]\n
-
+        - amount = 1 [Größe der Änderung]
     """
 
     if momentumModus == "new":
@@ -194,5 +198,27 @@ async def momentum(ctx, momentumModus="show", amount=1):
 async def ping(ctx):
   """Returns the latency of the bot."""
   await ctx.send(f"Pong! {round(JEbot.latency * 1000)}ms")
+
+
+#hisScore
+@JEbot.command(name="hisScore", description='Berichtsheft History Score', brief='Berichtsheft History Score')
+async def hisScore(ctx):
+    """
+    Berichtsheft History Score
+
+    """
+    schuelerScore = {}
+    async for msg in ctx.channel.history():
+        if msg.author.id not in schuelerScore:
+            schuelerScore[msg.author.id] = 1
+        else:
+            schuelerScore[msg.author.id] = schuelerScore[msg.author.id] + 1
+
+    returnString = str(schuelerScore)
+    returnString = returnString.replace('{', '')
+    returnString = returnString.replace('}', '')
+    returnString = returnString.replace(',', '\n')
+    await ctx.send(returnString)
+
 
 JEbot.run(TOKEN)
