@@ -72,13 +72,17 @@ async def id(ctx):
 
 #roll
 @JEbot.command(name="roll", description='Rolle einen Würfel', brief='Rolle einen Würfel')
-async def roll(ctx, dice='d6', amount=1, dmg=0, attack=0):
+async def roll(ctx, dice='d6', amount=0, dmg=0, attack=0):
     """
     Rolle einen Würfel
 
     Argumente (= default):
         - dice = d6 [wie viele Seiten soll der Würfel haben?]
         - amount = 1 [wie oft soll gewürfelt werden?]
+
+        PTU
+        - dmg = 0 [wie viel Schaden soll hinzugefügt werden?]
+        - attack = 0 [wie viel Attacke soll hinzugefügt werden
     """
     rolling = []
 
@@ -101,6 +105,9 @@ async def roll(ctx, dice='d6', amount=1, dmg=0, attack=0):
         amount = int(amount)
 
         dice = dice[dice.find("d"):]
+
+    if amount == 0:
+        amount = 1
 
     rollingVal = []
     rollSum=0
