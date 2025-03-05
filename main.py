@@ -3,17 +3,17 @@ ToDo´s:
 - Roll Botch should add 2 momentum
 - add before to chtotxt
 - add BS Block Counter
+- clear text of emojies
+- chtotxt datetime
+- fix chtotxt
 """
-
-
-
 import discord
 import random
 import os
-import datetime
 from dotenv import load_dotenv #zum Aufruf der .env Datei
 from discord.ext import commands
 import argparse #für die argument Beschreibung der commands
+import requests
 
 #File Import
 from momentum import Momentum
@@ -49,6 +49,7 @@ async def on_ready():
         'es lebt',
         'label nach links verschieben',
         'SCHOKOBON',
+        'JJJ-EF IS THE BEST'
     ]
     activity = discord.Game(name=random.choice(list))
     await JEbot.change_presence(status=discord.Status.online, activity=activity)
@@ -71,74 +72,68 @@ async def id(ctx):
 
 #roll
 @JEbot.command(name="roll", description='Rolle einen Würfel', brief='Rolle einen Würfel')
-async def roll(ctx, dice='d6', amount=1, system='',autoSuc = 0):
+async def roll(ctx, dice='d6', amount=1, dmg=0, attack=0):
     """
     Rolle einen Würfel
 
     Argumente (= default):
         - dice = d6 [wie viele Seiten soll der Würfel haben?]
         - amount = 1 [wie oft soll gewürfelt werden?]
-        - system = "" [wird mit einem bestimmten System gespielt?]
-                   "Scion"  [Scion: Erfolge werden nochmal gewürfelt und bei einem Botch wird Momentum hinzu gefügt]
-        - autoSuc = 0 [auto Erfolge]
-    """ 
+    """
     rolling = []
-    rollingVal = []
-    success = 0
-    if system.lower() == "scion":
-        dice = 'd10'
-        system == "scion"
-        if amount > 10 + thisSession.maxMomentum:
-            amount = 10 + thisSession.maxMomentum
 
-    #async def sendRollStr():
-    #    returnString = str(rolling)
-    #    returnString = returnString.replace('[', '')
-    #    returnString = returnString.replace(']', '')
-    #    returnString = returnString.replace(',', '\n')
-    #    returnString = returnString.replace("'", '')
-    #    await ctx.send(returnString)
-#
-    #    returnString = ""
-    #    rolling.clear()
-    #    return returnString,rolling
+    if "d" not in dice and dice.isnumeric:
+        amount = int(dice)
+        dice = "d6"
 
-
-    for wuerfel in range (0,amount) :
-        roll = True
-        while roll:
-            diceVal = random.randint(1, int(dice[1:]))
-            rollingVal.append(diceVal)
-            rolling.append(f"Wurf {len(rollingVal)}: {diceVal}")
-
-            #if len(rollingVal) == 150:
-            #    await sendRollStr()
-
-            if diceVal == 10 and system == "scion":
-                roll = True
-            else:
-                roll = False
-
-    botch = False
-    if system == "scion":
-        success = rollingVal.count(8) + rollingVal.count(9) + rollingVal.count(10)
-        rolling.append(f"Erfolge: {success} + {autoSuc}")
-        if success == 0 and 1 in rollingVal:
-            rolling.append(f"WOOOP BOTCH Momentum +2")
-            botch = True
-
+    def rollStr():
         returnString = str(rolling)
         returnString = returnString.replace('[', '')
         returnString = returnString.replace(']', '')
         returnString = returnString.replace(',', '\n')
         returnString = returnString.replace("'", '')
-        await ctx.send(returnString)
+        return returnString
 
-        #if botch:
-        #    await JEbot.get_command('momentum').invoke(ctx, "add", "2")
+    if dice.find("d") != 0:
+        attack = dmg
+        dmg = amount
+        amount = dice[:dice.find("d")]
+        amount = int(amount)
+
+        dice = dice[dice.find("d"):]
+
+    rollingVal = []
+    rollSum=0
+    for i in range (0,amount) :
+        if len(rollingVal) == 150:
+            break
+        diceVal = random.randint(1, int(dice[1:]))
+        rollSum += diceVal
+        rollingVal.append(diceVal)
+        rolling.append(f"Wurf {len(rollingVal)}: {diceVal}")
+
+    rolling.append(f"Alle Würfel: {rollSum}")
+    rollSum += dmg
+    rollSum += attack
+    if dmg != 0 or attack != 0:
+        rolling.append(f"+ DMG ({dmg}) + Attack ({attack}): {rollSum}")
+
+    await ctx.send(rollStr())
+
+#sum
+@JEbot.command(name="sum", description='Summiert die gegebenen werte', brief='Summiert die gegebenen werte')
+async def sum(ctx, *args):
+    """
+    Summiert die gegebenen werte
+    """
+    summe = 0
+    for arg in args:
+        summe += int(arg)
+
+    await ctx.send(f"summe: {summe}")
 
 @JEbot.command(name="chtotxt", description='den Inhalt des Channels in eine TXT schreiben', brief='den Inhalt des Channels in eine TXT schreiben')
-async def chtotxt(ctx, limit=10):
+async def chtotxt(ctx, limitT=10):
     """
     den Inhalt des Channels in eine TXT schreiben
 
@@ -146,10 +141,13 @@ async def chtotxt(ctx, limit=10):
         - limit = 10 [wie viele Nachrichten soll zurück gegangen werden?]
 
     """
+    emojies = ['(⌐■_■)']
     #https://stackoverflow.com/questions/63464013/discord-python-export-an-entire-chat-into-txt-file
     filename = f"{ctx.channel.name}.txt"
+    messages = [message async for message in ctx.history(limit=limitT)]
     with open(filename, "w") as file:
-        async for msg in ctx.channel.history(limit):
+        async for msg in messages:
+            #msg.replace(emojies, '')
             file.write(f"{msg.clean_content}\n")
     with open(filename, "r") as file:
         await ctx.send(file=discord.File(file, filename))
@@ -220,5 +218,18 @@ async def hisScore(ctx):
     returnString = returnString.replace(',', '\n')
     await ctx.send(returnString)
 
+#dad jokes
+headers = {
+	"X-RapidAPI-Key": "5e10bab5f9msh3ece857aa93db73p108517jsn735116d3629a",
+	"X-RapidAPI-Host": "dad-jokes.p.rapidapi.com"
+}
+
+@JEbot.command(name="dad", description='Gibt einen Dad Joke', brief='Gibt einen Dad Joke')
+async def dad(ctx):
+    """Returns a dad joke."""
+    url = "https://dad-jokes.p.rapidapi.com/random/joke"
+    response = requests.get(url, headers=headers)
+    joke = response.json()["body"][0]["setup"] + "\n\n" + response.json()["body"][0]["punchline"]
+    await ctx.send(joke)
 
 JEbot.run(TOKEN)
